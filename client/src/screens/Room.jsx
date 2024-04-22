@@ -76,7 +76,7 @@ const RoomPage = () => {
     [socket]
   );
 
-  peer.peer.oniceconnectionstatechange = async () => {
+  useEffect(() => {
     while (peer.peer.iceConnectionState == "disconnected") {
       console.log("Attempt to reconnect in 10 seconds...");
       setTimeout(async () => {
@@ -90,7 +90,7 @@ const RoomPage = () => {
         }
       }, 10000);
     }
-  };
+  }, [peer.peer.iceConnectionState]);
 
   const handleNegoNeedFinal = useCallback(async ({ ans }) => {
     await peer.setLocalDescription(ans);
@@ -209,15 +209,15 @@ const RoomPage = () => {
     }
 
     window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleICEConnectionStateChangeEvent);
+    // window.addEventListener("offline", handleICEConnectionStateChangeEvent);
 
     // Cleanup event listeners on component unmount
     return () => {
       window.removeEventListener("online", handleOnline);
-      window.removeEventListener(
-        "offline",
-        handleICEConnectionStateChangeEvent
-      );
+      // window.removeEventListener(
+      //   "offline",
+      //   handleICEConnectionStateChangeEvent
+      // );
     };
   }, [isOnline]);
 
