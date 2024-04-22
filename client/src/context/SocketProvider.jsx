@@ -9,7 +9,7 @@ export const useSocket = () => {
 };
 
 export const SocketProvider = (props) => {
-  const socket = useMemo(() => io("tcp.in.ngrok.io:13362"), []);
+  const socket = useMemo(() => io(process.env.REACT_APP_SOCKET_URL), []);
 
   return (
     <SocketContext.Provider value={socket}>
