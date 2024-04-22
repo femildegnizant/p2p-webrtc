@@ -76,19 +76,24 @@ const RoomPage = () => {
     [socket]
   );
 
-  useEffect(() => {
-    while (peer.peer.iceConnectionState == "disconnected") {
+  useEffect(async () => {
+    while (peer.peer.iceConnectionState === "disconnected") {
       console.log("Attempt to reconnect in 10 seconds...");
-      setTimeout(async () => {
-        console.log("Attempting reconnect...");
-        if (peer.peer.remoteDescription.type == "answer") {
+      await new Promise((resolve) => setTimeout(resolve, 10000)); // Wait for 10 seconds
+
+      console.log("Attempting reconnect...");
+      try {
+        if (peer.peer.remoteDescription.type === "answer") {
           await peer.peer.setLocalDescription();
           await peer.peer.setRemoteDescription(peer.peer.remoteDescription);
         } else {
           await peer.peer.setRemoteDescription(peer.peer.remoteDescription);
           await peer.peer.setLocalDescription();
         }
-      }, 10000);
+      } catch (error) {
+        console.error("Reconnect attempt failed:", error);
+        // Handle error or retry logic if needed
+      }
     }
   }, [peer.peer.iceConnectionState]);
 
