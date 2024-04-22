@@ -76,6 +76,22 @@ const RoomPage = () => {
     [socket]
   );
 
+  peer.peer.oniceconnectionstatechange = async () => {
+    while (peer.peer.iceConnectionState == "disconnected") {
+      console.log("Attempt to reconnect in 10 seconds...");
+      setTimeout(async () => {
+        console.log("Attempting reconnect...");
+        if (peer.peer.remoteDescription.type == "answer") {
+          await peer.peer.setLocalDescription();
+          await peer.peer.setRemoteDescription(peer.peer.remoteDescription);
+        } else {
+          await peer.peer.setRemoteDescription(peer.peer.remoteDescription);
+          await peer.peer.setLocalDescription();
+        }
+      }, 10000);
+    }
+  };
+
   const handleNegoNeedFinal = useCallback(async ({ ans }) => {
     await peer.setLocalDescription(ans);
   }, []);
