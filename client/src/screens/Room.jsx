@@ -74,6 +74,7 @@ const RoomPage = () => {
     async ({ from, offer }) => {
       const ans = await peer.getAnswer(offer);
       socket.emit("peer:nego:done", { to: from, ans });
+      if (!previousUserOnline) sendStreams();
     },
     [socket]
   );
@@ -94,8 +95,8 @@ const RoomPage = () => {
             await peer.peer.setLocalDescription();
             await peer.peer.setRemoteDescription(peer.peer.remoteDescription);
           } else {
-            const ans = await peer.getAnswer(offer);
-            socket.emit("call:accepted", { to: from, ans });
+            // const ans = await peer.getAnswer(offer);
+            // socket.emit("call:accepted", { to: from, ans });
             // await peer.peer.setRemoteDescription();
             // await peer.setLocalDescription(peer.peer.remoteDescription);
           }
@@ -223,7 +224,7 @@ const RoomPage = () => {
   };
 
   useEffect(() => {
-    console.log("isOnline", isOnline);
+    console.log("userOnline", userOnline);
     // if (!navigator.onLine) {
     //   handleICEConnectionStateChangeEvent();
     // }
@@ -236,7 +237,7 @@ const RoomPage = () => {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, [isOnline]);
+  }, [userOnline]);
 
   useEffect(() => {
     peer.peer.addEventListener("track", async (ev) => {
