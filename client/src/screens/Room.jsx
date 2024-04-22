@@ -2,12 +2,16 @@ import React, { useEffect, useCallback, useState } from "react";
 import ReactPlayer from "react-player";
 import peer from "../service/peer";
 import { useSocket } from "../context/SocketProvider";
+import { usePrevious } from "@uidotdev/usehooks";
 
 const RoomPage = () => {
   const socket = useSocket();
   const [remoteSocketId, setRemoteSocketId] = useState(null);
   const [myStream, setMyStream] = useState();
   const [remoteStream, setRemoteStream] = useState();
+  const [userOnline, setUserOnline] = useState(true);
+
+  const previousUserOnline = usePrevious(userOnline);
 
   const handleUserJoined = useCallback(({ email, id }) => {
     console.log(`Email ${email} joined room`);
@@ -90,8 +94,10 @@ const RoomPage = () => {
             await peer.peer.setLocalDescription();
             await peer.peer.setRemoteDescription(peer.peer.remoteDescription);
           } else {
-            await peer.peer.setRemoteDescription(peer.peer.remoteDescription);
-            await peer.peer.setLocalDescription();
+            const ans = await peer.getAnswer(offer);
+            socket.emit("call:accepted", { to: from, ans });
+            // await peer.peer.setRemoteDescription();
+            // await peer.setLocalDescription(peer.peer.remoteDescription);
           }
         } catch (error) {
           console.error("Reconnect attempt failed:", error);
@@ -111,7 +117,6 @@ const RoomPage = () => {
   };
 
   const handleICEConnectionStateChangeEvent = async (event) => {
-    setIsOnline(false);
     console.log(
       "*** ICE connection state changed to ==>",
       peer.peer,
@@ -153,7 +158,6 @@ const RoomPage = () => {
       //If temp failure then restart ice i.e audio/video is still flowing
       if (iceState == "failed") {
         peer.peer.restartIce();
-        setIsOnline(true);
       }
     }
   };
@@ -206,28 +210,31 @@ const RoomPage = () => {
   };
 
   const handleOnline = () => {
-    // setIsOnline(true);
+    if (previousUserOnline === false) {
+      handleCallUser();
+    }
+    setUserOnline(true);
     console.log("back to online");
   };
 
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const handleOffline = () => {
+    setUserOnline(false);
+    if (previousUserOnline === false) console.log("OFFLINE");
+  };
 
   useEffect(() => {
     console.log("isOnline", isOnline);
-    if (!navigator.onLine) {
-      handleICEConnectionStateChangeEvent();
-    }
+    // if (!navigator.onLine) {
+    //   handleICEConnectionStateChangeEvent();
+    // }
 
     window.addEventListener("online", handleOnline);
-    // window.addEventListener("offline", handleICEConnectionStateChangeEvent);
+    window.addEventListener("offline", handleOffline);
 
     // Cleanup event listeners on component unmount
     return () => {
       window.removeEventListener("online", handleOnline);
-      // window.removeEventListener(
-      //   "offline",
-      //   handleICEConnectionStateChangeEvent
-      // );
+      window.removeEventListener("offline", handleOffline);
     };
   }, [isOnline]);
 
