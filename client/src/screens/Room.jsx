@@ -3,8 +3,6 @@ import ReactPlayer from "react-player";
 import peer from "../service/peer";
 import { useSocket } from "../context/SocketProvider";
 
-const state = peer.peer.iceConnectionState;
-
 const RoomPage = () => {
   const socket = useSocket();
   const [remoteSocketId, setRemoteSocketId] = useState(null);
@@ -76,25 +74,28 @@ const RoomPage = () => {
     [socket]
   );
 
-  useEffect(async () => {
-    while (peer.peer.iceConnectionState === "disconnected") {
-      console.log("Attempt to reconnect in 10 seconds...");
-      await new Promise((resolve) => setTimeout(resolve, 10000)); // Wait for 10 seconds
+  useEffect(() => {
+    const retryFun = async () => {
+      while (peer.peer.iceConnectionState === "disconnected") {
+        console.log("Attempt to reconnect in 10 seconds...");
+        await new Promise((resolve) => setTimeout(resolve, 10000)); // Wait for 10 seconds
 
-      console.log("Attempting reconnect...");
-      try {
-        if (peer.peer.remoteDescription.type === "answer") {
-          await peer.peer.setLocalDescription();
-          await peer.peer.setRemoteDescription(peer.peer.remoteDescription);
-        } else {
-          await peer.peer.setRemoteDescription(peer.peer.remoteDescription);
-          await peer.peer.setLocalDescription();
+        console.log("Attempting reconnect...");
+        try {
+          if (peer.peer.remoteDescription.type === "answer") {
+            await peer.peer.setLocalDescription();
+            await peer.peer.setRemoteDescription(peer.peer.remoteDescription);
+          } else {
+            await peer.peer.setRemoteDescription(peer.peer.remoteDescription);
+            await peer.peer.setLocalDescription();
+          }
+        } catch (error) {
+          console.error("Reconnect attempt failed:", error);
+          // Handle error or retry logic if needed
         }
-      } catch (error) {
-        console.error("Reconnect attempt failed:", error);
-        // Handle error or retry logic if needed
       }
-    }
+    };
+    retryFun();
   }, [peer.peer.iceConnectionState]);
 
   const handleNegoNeedFinal = useCallback(async ({ ans }) => {
