@@ -82,6 +82,10 @@ const RoomPage = () => {
 
         console.log("Attempting reconnect...");
         try {
+          console.log(
+            "peer.peer.remoteDescription.type",
+            peer.peer.remoteDescription
+          );
           if (peer.peer.remoteDescription.type === "answer") {
             await peer.peer.setLocalDescription();
             await peer.peer.setRemoteDescription(peer.peer.remoteDescription);
